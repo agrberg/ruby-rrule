@@ -8,6 +8,7 @@ require 'active_support/core_ext/array/wrap'
 
 module RRule
   autoload :Rule, 'rrule/rule'
+  autoload :Recurrence, 'rrule/recurrence'
   autoload :Context, 'rrule/context'
   autoload :Weekday, 'rrule/weekday'
   autoload :Humanizer, 'rrule/humanizer'
@@ -36,6 +37,10 @@ module RRule
 
   def self.parse(rrule, **options)
     Rule.new(rrule, **options)
+  end
+
+  def self.build(dtstart: Time.now, tzid: 'UTC', exdate: [], max_year: nil, **attrs)
+    Rule.new(Recurrence.new(**attrs), dtstart: dtstart, tzid: tzid, exdate: exdate, max_year: max_year)
   end
 
   class InvalidRRule < StandardError; end

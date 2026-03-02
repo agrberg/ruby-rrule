@@ -2911,4 +2911,62 @@ describe RRule::Rule do
       it { expect(subject).to eq(true) }
     end
   end
+
+  describe 'construction from Recurrence' do
+    let(:dtstart) { Time.parse('Tue Sep  2 06:00:00 PDT 1997') }
+    let(:timezone) { 'America/New_York' }
+
+    it 'enumerates correctly with a basic daily Recurrence' do
+      recurrence = RRule::Recurrence.new(frequency: 'DAILY', interval: 1, count: 3)
+      rule = RRule::Rule.new(recurrence, dtstart: dtstart, tzid: timezone)
+
+      expect(rule.all).to match_array([
+        Time.parse('Tue Sep  2 06:00:00 PDT 1997'),
+        Time.parse('Wed Sep  3 06:00:00 PDT 1997'),
+        Time.parse('Thu Sep  4 06:00:00 PDT 1997'),
+      ])
+    end
+
+    it 'works with weekly frequency and by_day' do
+      recurrence = RRule::Recurrence.new(frequency: 'WEEKLY', interval: 1, by_day: %w[MO WE FR], count: 6)
+      rule = RRule::Rule.new(recurrence, dtstart: dtstart, tzid: timezone)
+      string_rule = RRule::Rule.new('FREQ=WEEKLY;INTERVAL=1;BYDAY=MO,WE,FR;COUNT=6', dtstart: dtstart, tzid: timezone)
+
+      expect(rule.all).to eq string_rule.all
+    end
+
+    it 'works with monthly NTH_DAY (by_day + by_set_pos)' do
+      recurrence = RRule::Recurrence.new(frequency: 'MONTHLY', interval: 1, by_day: ['TU'], by_set_pos: [2], count: 3)
+      rule = RRule::Rule.new(recurrence, dtstart: dtstart, tzid: timezone)
+      string_rule = RRule::Rule.new('FREQ=MONTHLY;INTERVAL=1;BYDAY=TU;BYSETPOS=2;COUNT=3', dtstart: dtstart, tzid: timezone)
+
+      expect(rule.all).to eq string_rule.all
+    end
+
+    it 'works via RRule.build factory' do
+      rule = RRule.build(frequency: 'WEEKLY', interval: 1, by_day: ['MO'], count: 3, dtstart: dtstart, tzid: timezone)
+      string_rule = RRule::Rule.new('FREQ=WEEKLY;INTERVAL=1;BYDAY=MO;COUNT=3', dtstart: dtstart, tzid: timezone)
+
+      expect(rule.all).to eq string_rule.all
+    end
+
+    it 'returns the RRULE string from to_s, not the Recurrence object' do
+      recurrence = RRule::Recurrence.new(frequency: 'DAILY', interval: 1)
+      rule = RRule::Rule.new(recurrence, dtstart: dtstart, tzid: timezone)
+
+      expect(rule.to_s).to eq 'FREQ=DAILY;INTERVAL=1'
+      expect(rule.to_s).to be_a(String)
+    end
+
+    it 'round-trips through from_rrule' do
+      recurrence = RRule::Recurrence.new(frequency: 'MONTHLY', interval: 2, by_month_day: [1, 15], count: 5)
+      rule = RRule::Rule.new(recurrence, dtstart: dtstart, tzid: timezone)
+      parsed = RRule::Recurrence.from_rrule(rule.to_s)
+
+      expect(parsed.frequency).to eq recurrence.frequency
+      expect(parsed.interval).to eq recurrence.interval
+      expect(parsed.by_month_day).to eq recurrence.by_month_day
+      expect(parsed.count).to eq recurrence.count
+    end
+  end
 end
