@@ -4,6 +4,8 @@
 
 rrule is a minimalist library for expanding RRULEs, with a goal of being fully compliant with [iCalendar spec](https://tools.ietf.org/html/rfc2445).
 
+If you're working on the gem itself rather than using it, [ARCHITECTURE.md](ARCHITECTURE.md) explains how an RRULE string becomes a sequence of dates.
+
 ## Examples
 
 To install this gem, add it to your Gemfile:
